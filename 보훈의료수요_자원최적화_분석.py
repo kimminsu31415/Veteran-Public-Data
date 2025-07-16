@@ -167,14 +167,18 @@ plt.close()
 
 # === 창의적이고 트렌디한 시각화 추가 ===
 
-# (5) 인터랙티브 대시보드 스타일 - 종합 분석 대시보드
-print("\n=== 인터랙티브 대시보드 생성 중 ===")
+# (5) 인터랙티브 대시보드 스타일 - 종합 분석 대시보드 (레이아웃 개선)
+print("\n=== 레이아웃 개선된 인터랙티브 대시보드 생성 중 ===")
 fig = make_subplots(
-    rows=2, cols=2,
-    subplot_titles=('지역별 의료 접근성 분포', '클러스터별 특성 분석', 
-                    '상위/하위 10개 지역 비교', '의료자원 효율성 분석'),
+    rows=3, cols=2,
+    subplot_titles=('📊 지역별 의료 접근성 분포', '🌍 클러스터별 특성 분석', 
+                    '🏆 상위/하위 10개 지역 비교', '💡 의료자원 효율성 분석',
+                    '📈 효율성 지수 상세 분석', ''),
     specs=[[{"secondary_y": False}, {"secondary_y": False}],
-           [{"secondary_y": False}, {"secondary_y": False}]]
+           [{"secondary_y": False}, {"secondary_y": False}],
+           [{"colspan": 2, "secondary_y": False}, None]],  # 마지막 행은 전체 폭
+    vertical_spacing=0.12,  # 행간 간격 증가
+    horizontal_spacing=0.08  # 열간 간격 증가
 )
 
 # 1사분면: 히스토그램으로 의료 접근성 분포
@@ -214,20 +218,48 @@ fig.add_trace(
     go.Scatter(x=merged['보훈대상자수'], y=merged['효율성_지수'],
               mode='markers', name='효율성 지수',
               marker=dict(color=merged['천명당_병상수'], 
-                         colorscale='Viridis', size=10, opacity=0.7,
-                         colorbar=dict(title="1000명당 병상수"))),
+                         colorscale='Viridis', size=8, opacity=0.7,
+                         colorbar=dict(title="천명당 병상수", x=1.02))),
     row=2, col=2
 )
 
-fig.update_layout(
-    title_text="보훈의료 자원배분 종합 분석 대시보드",
-    title_x=0.5,
-    height=800,
-    showlegend=True,
-    font=dict(family="Malgun Gothic", size=10)
+# 5사분면: 효율성 지수 상세 분석 (전체 폭 사용)
+sorted_efficiency = merged.nlargest(15, '효율성_지수')
+fig.add_trace(
+    go.Bar(x=sorted_efficiency['시군구'], y=sorted_efficiency['효율성_지수'],
+           name='효율성 지수 TOP 15', marker_color='purple', opacity=0.8,
+           text=sorted_efficiency['효율성_지수'].round(1),
+           textposition='outside'),
+    row=3, col=1
 )
 
-fig.write_html('보훈의료_종합대시보드.html')
+fig.update_layout(
+    title_text="🏥 보훈의료 자원배분 종합 분석 대시보드 (개선판)",
+    title_x=0.5,
+    height=1200,  # 높이 증가
+    width=1400,   # 폭 증가
+    showlegend=True,
+    legend=dict(orientation="h", yanchor="bottom", y=-0.08, xanchor="center", x=0.5),
+    font=dict(family="Malgun Gothic", size=11),
+    margin=dict(l=80, r=120, t=100, b=120)  # 여백 증가
+)
+
+# 축 레이블 업데이트
+fig.update_xaxes(title_text="천명당 병상수", row=1, col=1)
+fig.update_yaxes(title_text="지역 수", row=1, col=1)
+fig.update_xaxes(title_text="보훈대상자수 (명)", row=1, col=2)
+fig.update_yaxes(title_text="병상수 (개)", row=1, col=2)
+fig.update_xaxes(title_text="지역", row=2, col=1)
+fig.update_yaxes(title_text="천명당 병상수", row=2, col=1)
+fig.update_xaxes(title_text="보훈대상자수 (명)", row=2, col=2)
+fig.update_yaxes(title_text="효율성 지수", row=2, col=2)
+fig.update_xaxes(title_text="지역", row=3, col=1)
+fig.update_yaxes(title_text="효율성 지수", row=3, col=1)
+
+# 개선된 HTML 파일로 저장
+fig.write_html('보훈의료_종합대시보드_개선판.html')
+print("✅ 레이아웃 개선된 대시보드 생성: 보훈의료_종합대시보드_개선판.html")
+print("🎯 주요 개선사항: 높이 1200px, 효율성 지수 차트 분리, 겹침 방지")
 fig.show()
 
 # (6) 트렌디한 인포그래픽 스타일 - 클러스터별 특성 카드
